@@ -1,0 +1,73 @@
+name: assay-standard-runner-architectures
+run-name: assay six free public standard runner types
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  assay:
+    name: "${{ matrix.name }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x64
+            runner: ubuntu-latest
+            platform: linux
+            architecture: x64
+          - name: linux-arm64
+            runner: ubuntu-24.04-arm
+            platform: linux
+            architecture: arm64
+          - name: windows-x64
+            runner: windows-latest
+            platform: win32
+            architecture: x64
+          - name: windows-arm64
+            runner: windows-11-arm
+            platform: win32
+            architecture: arm64
+          - name: macos-arm64
+            runner: macos-latest
+            platform: darwin
+            architecture: arm64
+          - name: macos-intel
+            runner: macos-15-intel
+            platform: darwin
+            architecture: x64
+    runs-on: "${{ matrix.runner }}"
+    timeout-minutes: 5
+    env:
+      EXPECTED_PLATFORM: "${{ matrix.platform }}"
+      EXPECTED_ARCHITECTURE: "${{ matrix.architecture }}"
+    steps:
+      - name: Prove runner identity and deterministic CPU work
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const assert = require("node:assert/strict");
+          const { pbkdf2Sync } = require("node:crypto");
+          const os = require("node:os");
+          assert.equal(process.platform, process.env.EXPECTED_PLATFORM);
+          assert.equal(process.arch, process.env.EXPECTED_ARCHITECTURE);
+          assert.ok(os.cpus().length >= 1);
+          assert.ok(os.totalmem() >= 4 * 1024 * 1024 * 1024);
+          const result = pbkdf2Sync(
+            "harmonious union",
+            "github-public-standard-runner/v1",
+            120000,
+            32,
+            "sha256",
+          ).toString("hex");
+          assert.equal(result, "bfd4aab106eac84dd947344d61c07abff74cedd2018447504162ffb86c7ef545");
+          console.log(JSON.stringify({
+            platform: process.platform,
+            architecture: process.arch,
+            logicalCpuCount: os.cpus().length,
+            memoryBytes: os.totalmem(),
+            deterministicWork: "passed",
+          }));
+          NODE

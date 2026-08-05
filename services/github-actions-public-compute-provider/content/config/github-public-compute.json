@@ -1,0 +1,25 @@
+{
+  "runnerRepository": "emsenn/union-free-compute-runner",
+  "workflowPath": ".github/workflows/bounded-public-test.yml",
+  "workflowRef": "bounded-public-test-v1",
+  "workflowCommit": "369a60cb1cb9b032a47286c0fe553c1f8a8aa9bd",
+  "workflowGitBlob": "5a1d9ade97390753e9fdc1b3c1fede0f45fc3b94",
+  "workflowSha256": "873c857cca451014e3e24a1e8d30b3e279d40a7b1cf18b3cc38958ece806717f",
+  "workflowReleaseId": 358118180,
+  "requiredVisibility": "public",
+  "allowedStandardRunners": [
+    "ubuntu-latest",
+    "ubuntu-24.04-arm",
+    "windows-latest",
+    "windows-11-arm",
+    "macos-latest",
+    "macos-15-intel"
+  ],
+  "forbiddenPaidLabelSuffixes": ["-large", "-xlarge"],
+  "maximumConcurrentStandardJobs": 20,
+  "maximumConcurrentMacosJobs": 5,
+  "timeoutMinutes": 15,
+  "artifacts": false,
+  "caches": false,
+  "secrets": false
+}
