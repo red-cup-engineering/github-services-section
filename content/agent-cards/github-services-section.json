@@ -1,0 +1,110 @@
+{
+  "name": "github-services-section",
+  "capabilities": {
+    "extensions": [
+      {
+        "uri": "ni:///sha-256;wzh-zYeFQCsh4zAzGS34uacNV4qJeIEmCKIUUWyRZ-M",
+        "required": true,
+        "params": {
+          "profile": "org.emsenn.rmn.sovereign-circuit-interface.v1",
+          "account": "eip155:31337:0x505903799ef5cfd765682c6fa3dade0dd93bdb5a",
+          "authority": "ni:///sha-256;7EmbMSYYI5leRv_Qm9jByRkCxrcwLTPMG3x9R9XkTYM",
+          "custody": "ni:///sha-256;h2Zv0xHVWs1e2A04u4Ei5P0T8fkxdyD3EiECAVVq3lc",
+          "territory": "ni:///sha-256;qa82GlYJ4PxomWZCnc-ew8rODXTYJHBeeRnqKPaZM-k",
+          "component": {
+            "profile": "org.emsenn.rmn.hierarchical-circuit.v3",
+            "law": "ni:///sha-256;o6RFKxdwhJiP10sdkYyYz7XOymq0pepy-7bT3ELOYjk",
+            "ports": [
+              {
+                "name": "request",
+                "direction": "input",
+                "predicate": "ni:///sha-256;imfYYXnGSUccFG5ssZFW9dA0suu-_rPO2CU2fgDqXDw",
+                "carrier": "ni:///sha-256;jOi94EsaoIwgn1zquZyqcG0iUQhuCKB-dZqcJ2PqoTg",
+                "mode": "tensor"
+              },
+              {
+                "name": "receipt",
+                "direction": "output",
+                "predicate": "ni:///sha-256;imfYYXnGSUccFG5ssZFW9dA0suu-_rPO2CU2fgDqXDw",
+                "carrier": "ni:///sha-256;jOi94EsaoIwgn1zquZyqcG0iUQhuCKB-dZqcJ2PqoTg",
+                "mode": "tensor"
+              }
+            ],
+            "instances": [],
+            "nets": [],
+            "behavior": {
+              "factors": [
+                {
+                  "inputs": [
+                    "request"
+                  ],
+                  "outputs": [
+                    "receipt"
+                  ],
+                  "rows": [
+                    {
+                      "input": [
+                        {
+                          "positiveEvidence": false,
+                          "negativeEvidence": false
+                        }
+                      ],
+                      "output": [
+                        {
+                          "positiveEvidence": false,
+                          "negativeEvidence": false
+                        }
+                      ]
+                    },
+                    {
+                      "input": [
+                        {
+                          "positiveEvidence": true,
+                          "negativeEvidence": false
+                        }
+                      ],
+                      "output": [
+                        {
+                          "positiveEvidence": true,
+                          "negativeEvidence": false
+                        }
+                      ]
+                    },
+                    {
+                      "input": [
+                        {
+                          "positiveEvidence": false,
+                          "negativeEvidence": true
+                        }
+                      ],
+                      "output": [
+                        {
+                          "positiveEvidence": false,
+                          "negativeEvidence": true
+                        }
+                      ]
+                    },
+                    {
+                      "input": [
+                        {
+                          "positiveEvidence": true,
+                          "negativeEvidence": true
+                        }
+                      ],
+                      "output": [
+                        {
+                          "positiveEvidence": true,
+                          "negativeEvidence": true
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}

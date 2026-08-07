@@ -1,0 +1,23 @@
+{
+  "name": "@red-cup-engineering/github-actions-public-compute-provider",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A fail-closed dispatcher and public workflow for zero-cash standard GitHub-hosted test compute.",
+  "bin": {
+    "dispatch-public-test-compute": "./scripts/dispatch-public-test-compute.mjs"
+  },
+  "exports": {
+    ".": "./src/admission.mjs"
+  },
+  "dependencies": {
+    "@red-cup-engineering/github-services-section": "1.0.0"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "LicenseRef-561Group-1.0"
+}

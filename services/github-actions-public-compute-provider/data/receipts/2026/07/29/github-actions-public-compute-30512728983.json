@@ -1,0 +1,33 @@
+{
+  "type": "GitHubPublicTestComputeReceipt",
+  "provider": "urn:ame:github-actions-public-compute-provider",
+  "transition": {
+    "from": "immutable-public-source-admitted",
+    "pressure": "bounded public test demand",
+    "to": "github-hosted-test-settled"
+  },
+  "run": {
+    "repository": "emsenn/union-free-compute-runner",
+    "workflow": "bounded-public-test",
+    "workflowRef": "bounded-public-test-v1",
+    "workflowCommit": "369a60cb1cb9b032a47286c0fe553c1f8a8aa9bd",
+    "workflowSha256": "873c857cca451014e3e24a1e8d30b3e279d40a7b1cf18b3cc38958ece806717f",
+    "releaseId": 358118180,
+    "targetCommit": "369a60cb1cb9b032a47286c0fe553c1f8a8aa9bd",
+    "runId": 30512728983,
+    "jobId": 90776035765,
+    "runner": "ubuntu-latest",
+    "patchBytes": 0,
+    "status": "completed",
+    "conclusion": "success",
+    "runUrl": "https://github.com/emsenn/union-free-compute-runner/actions/runs/30512728983",
+    "jobUrl": "https://github.com/emsenn/union-free-compute-runner/actions/runs/30512728983/job/90776035765"
+  },
+  "resource": {
+    "denomination": "GitHub public standard-runner allowance",
+    "declaredCashCost": 0,
+    "currency": "USD",
+    "durationSeconds": 4
+  },
+  "verifiedAt": "2026-07-30T04:01:35Z"
+}

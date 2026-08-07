@@ -1,0 +1,90 @@
+name: bounded-public-test
+run-name: "public test ${{ inputs.target_repository }}@${{ inputs.target_commit }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_repository:
+        description: Public owner/repository
+        required: true
+        type: string
+      target_commit:
+        description: Exact 40-hex commit
+        required: true
+        type: string
+      patch_base64:
+        description: Optional base64 unified diff, at most 48 KiB decoded
+        required: false
+        default: ""
+        type: string
+
+permissions: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TARGET_REPOSITORY: "${{ inputs.target_repository }}"
+      TARGET_COMMIT: "${{ inputs.target_commit }}"
+      PATCH_BASE64: "${{ inputs.patch_base64 }}"
+    steps:
+      - name: Admit immutable public source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$TARGET_REPOSITORY" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
+            echo "REFUSED_INVALID_REPOSITORY"
+            exit 64
+          fi
+          if [[ ! "$TARGET_COMMIT" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "REFUSED_MUTABLE_COMMIT"
+            exit 64
+          fi
+          git init --quiet work
+          git -C work remote add origin "https://github.com/${TARGET_REPOSITORY}.git"
+          git -C work -c protocol.file.allow=never fetch --quiet --depth=1 origin "$TARGET_COMMIT"
+          test "$(git -C work rev-parse FETCH_HEAD)" = "${TARGET_COMMIT,,}"
+          git -C work -c advice.detachedHead=false checkout --quiet --detach FETCH_HEAD
+
+      - name: Admit bounded candidate patch
+        if: ${{ inputs.patch_base64 != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s' "$PATCH_BASE64" | base64 --decode > candidate.diff
+          patch_bytes=$(wc -c < candidate.diff)
+          if (( patch_bytes > 49152 )); then
+            echo "REFUSED_PATCH_TOO_LARGE"
+            exit 64
+          fi
+          git -C work apply --check ../candidate.diff
+          git -C work apply --whitespace=nowarn ../candidate.diff
+
+      - name: Run one detected test harness
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f package-lock.json ]]; then
+            npm ci --no-audit --no-fund
+            npm test
+          elif [[ -f package.json ]]; then
+            npm install --no-audit --no-fund
+            npm test
+          elif [[ -f pyproject.toml ]]; then
+            python -m pip install --disable-pip-version-check -e .
+            python -m pytest -q
+          elif [[ -f requirements.txt ]]; then
+            python -m pip install --disable-pip-version-check -r requirements.txt
+            python -m pytest -q
+          elif [[ -f Cargo.toml ]]; then
+            cargo test --locked
+          elif [[ -f go.mod ]]; then
+            go test ./...
+          elif [[ -f Makefile ]] && grep -Eq '^[.]?PHONY:.*test|^test:' Makefile; then
+            make test
+          else
+            echo "REFUSED_NO_KNOWN_TEST_HARNESS"
+            exit 64
+          fi
