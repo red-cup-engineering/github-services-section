@@ -1,7 +1,6 @@
 {
   "name": "@red-cup-engineering/union-public-compute-assay",
-  "version": "1.0.0",
-  "private": true,
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "test": "node --test test/*.test.mjs"
