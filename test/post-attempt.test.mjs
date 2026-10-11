@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { postAttempt, postingAllowed } from "../src/post-attempt.mjs";
+import { postAttempt, postingAllowed } from "../src/software-induction.mjs";
 
 const pkg = {
   repo: "acme/widgets", issueNumber: 42, file: "src/a.js",

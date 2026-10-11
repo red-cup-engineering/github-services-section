@@ -3,13 +3,12 @@ const TERMINAL = new Set(["bound", "refused", "publication-uncertain", "response
 const errorBody = (error) => ({ name: error instanceof Error ? error.name : "Error", message: error instanceof Error ? error.message : String(error) });
 
 /**
- * Durable operation-store contract, supplied by the cloud/on-chain boundary:
+ * Durable operation-store contract, supplied by the hosting runtime:
  *   get(operation) -> immutable current record or null
  *   compareAndSet(operation, expectedVersion|null, record) -> stored record
  *
  * `compareAndSet` must reject a stale expectedVersion and return a record with
- * its new opaque `version`.  This service deliberately supplies no filesystem
- * fallback: local state is not an authority for a cloud induction operation.
+ * its new opaque `version`. SQLite provides this contract on the active host.
  */
 function assertStore(store) {
   if (!store || typeof store.get !== "function" || typeof store.compareAndSet !== "function") {
@@ -19,7 +18,7 @@ function assertStore(store) {
 function pending(record) { return new Error(`GitHub induction operation is already ${record.state}; its admitted owner must resume or reconcile it`); }
 
 export async function executeInductionSaga(request, { induce, provider = {}, operationStore } = {}) {
-  if (typeof request?.id !== "string" || request.id === "") throw new Error("induction saga requires the exact RMN request identity");
+  if (typeof request?.id !== "string" || request.id === "") throw new Error("induction saga requires the exact request identity");
   if (typeof induce !== "function") throw new Error("induction saga requires an induction operation");
   assertStore(operationStore);
   const key = request.id;
@@ -39,7 +38,7 @@ export async function executeInductionSaga(request, { induce, provider = {}, ope
     const target = request.input?.target ?? { repository: request.input?.source?.repository, ref: "heads/main" };
     try {
       const head = await provider.api?.getRef?.(target.repository, target.ref.slice("heads/".length));
-      const commit = head && await provider.api?.getCommit?.(target.repository, head), marker = `RMN-Request: ${key}`;
+      const commit = head && await provider.api?.getCommit?.(target.repository, head), marker = `Induction-Request: ${key}`;
       if (commit?.message?.includes(marker) && (target.create || commit.parents?.some((parent) => (parent.sha ?? parent) === request.input?.source?.commit))) {
         const result = Object.freeze({ disposition: "bound", provider: "urn:ame:github-software-induction-service", operation: key, repository: target.repository, ref: target.ref, priorCommit: target.create ? null : request.input.source.commit, commit: head, recovered: true });
         await transition("bound", { result }); return result;

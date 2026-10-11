@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { executeInductionSaga, markInductionResponseDelivered } from "../src/induction-saga.mjs";
 
-const request = (id = "rmn:request:one") => ({ id, input: { source: { commit: "a".repeat(40), repository: "union/root" }, target: { repository: "union/root", ref: "heads/main" } } });
+const request = (id = "request:one") => ({ id, input: { source: { commit: "a".repeat(40), repository: "union/root" }, target: { repository: "union/root", ref: "heads/main" } } });
 function memoryStore() {
   const records = new Map();
   return {
@@ -15,7 +15,7 @@ function memoryStore() {
   };
 }
 
-test("duplicate delivery resumes one exact RMN operation without another mutation", async () => {
+test("duplicate delivery resumes one exact operation without another mutation", async () => {
   const operationStore = memoryStore(); let mutations = 0;
   const induce = async () => ({ disposition: "bound", commit: `c${++mutations}` });
   const first = await executeInductionSaga(request(), { induce, operationStore });
@@ -26,7 +26,7 @@ test("duplicate delivery resumes one exact RMN operation without another mutatio
 test("reconciles GitHub commit identity after a crash following publication", async () => {
   const operationStore = memoryStore(), key = request().id; let mutations = 0;
   const crash = async (_input, { onState }) => { await onState("publication-attempted"); mutations += 1; throw new Error("process died after Git commit"); };
-  const api = { getRef: async () => "c".repeat(40), getCommit: async () => ({ message: `Induce\n\nRMN-Request: ${key}`, parents: [{ sha: "a".repeat(40) }] }) };
+  const api = { getRef: async () => "c".repeat(40), getCommit: async () => ({ message: `Induce\n\nInduction-Request: ${key}`, parents: [{ sha: "a".repeat(40) }] }) };
   await assert.rejects(executeInductionSaga(request(), { induce: crash, operationStore, provider: { api } }), /process died/);
   const recovered = await executeInductionSaga(request(), { induce: async () => { mutations += 1; }, operationStore, provider: { api } });
   assert.equal(recovered.recovered, true); assert.equal(recovered.commit, "c".repeat(40)); assert.equal(mutations, 1);
@@ -51,7 +51,7 @@ test("response delivery failure does not rerun a bound mutation", async () => {
 test("compare-and-set grants one concurrent duplicate delivery the admission ownership", async () => {
   const operationStore = memoryStore(); let mutations = 0;
   const induce = async () => { mutations += 1; await new Promise((resolve) => setImmediate(resolve)); return { disposition: "bound", commit: "c" }; };
-  const outcomes = await Promise.allSettled([executeInductionSaga(request("rmn:request:race"), { induce, operationStore }), executeInductionSaga(request("rmn:request:race"), { induce, operationStore })]);
+  const outcomes = await Promise.allSettled([executeInductionSaga(request("request:race"), { induce, operationStore }), executeInductionSaga(request("request:race"), { induce, operationStore })]);
   assert.equal(mutations, 1); assert.equal(outcomes.filter((outcome) => outcome.status === "fulfilled").length, 1);
   assert.match(outcomes.find((outcome) => outcome.status === "rejected").reason.message, /already admitted/);
 });

@@ -1,20 +1,23 @@
-// Publication effect. Publishes an authorized attempt package through the hired GitHub provider:
+// GitHub software induction: induceGithubSoftwareProposalLocally materializes a
+// proposal-only change set at one immutable commit, verifies it independently and
+// publishes it as one tree/commit/ref compare-and-swap.
+//
+// postAttempt publishes an authorized attempt package through the GitHub API:
 // comments `/attempt`, forks the bounty repo, pushes the fix to a branch on the fork, and
-// opens a PR upstream whose body carries `/claim`. This is the ONLY code in the system that
-// writes to the outside world, so it is TRIPLE-GATED and refuses unless all three are set:
+// opens a PR upstream whose body carries `/claim`. Posting writes to the outside world,
+// so it is triple-gated and refuses unless all three are set:
 //   - opts.enabled === true      (explicit call-site intent)
 //   - opts.confirm === true       (explicit second confirmation)
 //   - process.env.POSTING_ENABLED === "1"   (environment kill-switch, default off)
 // Note: Algora ignores bot-authored events, so the token MUST belong to a human-type account.
-import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
-import { githubApi } from "@red-cup-engineering/github-services-section";
-import { runTestsCommand } from "@red-cup-engineering/sandbox-command-execution-service";
+import { githubApi } from "./github-api.mjs";
+import { runTestsCommand } from "@red-cup-engineering/javascript-node-services-section/run-sandboxed-command";
+import { sha256Digest, sha256Hex } from "@red-cup-engineering/cryptographic-computer-data-engineering-services-section/integrity";
 
-const digest = (bytes) => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
 
 function assertProposal(proposal) {
   if (proposal?.type !== "SoftwareMissionChangeProposal" || proposal.proposalOnly !== true
@@ -58,7 +61,7 @@ function repositoryFromGitmodules(bytes, submodulePath, sourceRepository) {
   throw new Error(`gitlink ${submodulePath} is not bound to an admitted GitHub repository in .gitmodules`);
 }
 
-async function admitProposalAtJsMark({ territory, source, proposal, writablePaths, verifyCommand, acceptanceCommand, existing, api }) {
+async function admitProposal({ territory, source, proposal, writablePaths, verifyCommand, acceptanceCommand, existing, api }) {
   if (!Array.isArray(writablePaths) || writablePaths.length === 0) throw new Error("customer induction requires an explicit writable lane");
   const lanes = writablePaths.map((path) => relative(territory, inside(territory, path)));
   const seen = new Set(), appliedPaths = [];
@@ -81,7 +84,7 @@ async function admitProposalAtJsMark({ territory, source, proposal, writablePath
       }
       const commit = await api.getCommit(repository, change.afterCommit);
       if (commit?.sha !== undefined && commit.sha !== change.afterCommit) throw new Error(`gitlink target commit identity drift: ${path}`);
-      const target = inside(territory, path), archive = join(dirname(target), `.gitlink-${createHash("sha256").update(path).digest("hex")}.tar.gz`);
+      const target = inside(territory, path), archive = join(dirname(target), `.gitlink-${sha256Hex(path)}.tar.gz`);
       rmSync(target, { recursive: true, force: true });
       mkdirSync(target, { recursive: true });
       await api.downloadRepositoryTarball(repository, change.afterCommit, archive);
@@ -96,11 +99,11 @@ async function admitProposalAtJsMark({ territory, source, proposal, writablePath
     if (current && current.type !== "blob") throw new Error(`ordinary file transition targets a non-blob Git object: ${path}`);
     const before = await api.getContentBytes(source.repository, source.commit, path);
     const observedBefore = before ?? Buffer.alloc(0);
-    if ((before !== null) !== change.beforeExisted || digest(observedBefore) !== change.beforeDigest) {
+    if ((before !== null) !== change.beforeExisted || sha256Digest(observedBefore) !== change.beforeDigest) {
       throw new Error(`customer induction before-state drift: ${path}`);
     }
     const after = Buffer.from(change.afterBytesBase64 ?? "", "base64");
-    if (digest(after) !== change.afterDigest) throw new Error(`customer induction after-state drift: ${path}`);
+    if (sha256Digest(after) !== change.afterDigest) throw new Error(`customer induction after-state drift: ${path}`);
     const target = inside(territory, path);
     mkdirSync(dirname(target), { recursive: true });
     writeFileSync(target, after);
@@ -153,7 +156,7 @@ export async function induceGithubSoftwareProposalLocally({
       .map((entry) => [entry.path, entry]));
     const receipt = induce ? await induce({ territory, writablePaths, verifyCommand, acceptanceCommand }, {
       semanticId: proposal.id ?? null, outcome: { candidateVerified: true, proposal },
-    }) : await admitProposalAtJsMark({ territory, source, proposal, writablePaths, verifyCommand, acceptanceCommand, existing, api });
+    }) : await admitProposal({ territory, source, proposal, writablePaths, verifyCommand, acceptanceCommand, existing, api });
     if (!receipt?.verification?.passed || !receipt?.acceptance?.passed) {
       throw new Error("customer induction did not independently verify and accept the proposal");
     }
@@ -195,11 +198,11 @@ export async function induceGithubSoftwareProposalLocally({
       }
       const before = await api.getContentBytes(source.repository, source.commit, change.path);
       const observedBefore = before ?? Buffer.alloc(0);
-      if ((before !== null) !== change.beforeExisted || digest(observedBefore) !== change.beforeDigest) {
+      if ((before !== null) !== change.beforeExisted || sha256Digest(observedBefore) !== change.beforeDigest) {
         throw new Error(`customer induction before-state drift: ${change.path}`);
       }
       const after = Buffer.from(change.afterBytesBase64, "base64");
-      if (digest(after) !== change.afterDigest) throw new Error(`customer induction after-state drift: ${change.path}`);
+      if (sha256Digest(after) !== change.afterDigest) throw new Error(`customer induction after-state drift: ${change.path}`);
       const blob = await api.createBlob(target.repository, after);
       entries.push({ path: change.path, mode: existing.get(change.path)?.mode ?? "100644", type: "blob", sha: blob.sha });
     }
@@ -207,7 +210,7 @@ export async function induceGithubSoftwareProposalLocally({
     const tree = await api.createTree(target.repository, { baseTree: parentCommit?.tree.sha, entries });
     await onState("publication-attempted");
     const commit = await api.createCommit(target.repository, {
-      message: operationKey ? `${commitMessage}\n\nRMN-Request: ${operationKey}` : commitMessage,
+      message: operationKey ? `${commitMessage}\n\nInduction-Request: ${operationKey}` : commitMessage,
       tree: tree.sha,
       parents: creatingRepository ? [] : [source.commit],
     });
