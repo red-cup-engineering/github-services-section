@@ -1,4 +1,4 @@
-import { semanticId } from "@red-cup-engineering/computer-content-engineering-services-section/semiotic-content-address";
+import { semanticId } from "@red-cup-engineering/computer-content-address-engineering-services-section/semiotic-content-address";
 
 const SHA = /^[a-f0-9]{40}$/u;
 const REPOSITORY = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u;
