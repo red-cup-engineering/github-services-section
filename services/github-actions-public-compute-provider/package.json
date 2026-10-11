@@ -11,7 +11,8 @@
     ".": "./src/admission.mjs"
   },
   "dependencies": {
-    "@red-cup-engineering/github-services-section": "1.0.0"
+    "@red-cup-engineering/github-services-section": "workspace:*",
+    "@red-cup-engineering/cryptographic-computer-data-engineering-services-section": "workspace:*"
   },
   "scripts": {
     "test": "node --test test/*.test.mjs"

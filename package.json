@@ -1,10 +1,31 @@
 {
   "name": "@red-cup-engineering/github-services-section",
-  "version": "1.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
-  "exports": "./src/github-api.mjs",
+  "dependencies": {
+    "@red-cup-engineering/computer-content-engineering-services-section": "workspace:*",
+    "@red-cup-engineering/computer-system-engine": "workspace:*",
+    "@red-cup-engineering/cryptographic-computer-data-engineering-services-section": "workspace:*",
+    "@red-cup-engineering/javascript-node-services-section": "workspace:*",
+    "@red-cup-engineering/json-services-section": "workspace:*"
+  },
+  "exports": {
+    ".": "./src/github-api.mjs",
+    "./protected-source-authorization": "./src/protected-source-authorization.mjs",
+    "./software-induction": "./src/software-induction.mjs",
+    "./induction-saga": "./src/induction-saga.mjs"
+  },
+  "bin": {
+    "authorize-protected-source": "./scripts/authorize-protected-source.mjs"
+  },
+  "files": [
+    "src",
+    "scripts",
+    "README.md",
+    "package.json"
+  ],
   "scripts": {
-    "test": "node --test"
+    "check": "node --check src/*.mjs && node --check scripts/authorize-protected-source.mjs",
+    "test": "node --test test/*.test.mjs"
   }
 }
