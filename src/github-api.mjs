@@ -52,13 +52,19 @@ export function githubApi({ fetchImpl = fetch } = {}) {
     const path = `/repos/${repo}/tarball${suffix}`;
     const initial = await fetchImpl(`${GH}${path}`, { headers, redirect: "manual" });
     if (![301, 302, 303, 307, 308].includes(initial.status)) {
-      if (!initial.ok) throw new Error(`github GET ${path} -> ${initial.status} ${(await initial.text()).slice(0, 200)}`);
+      if (!initial.ok) throw Object.assign(
+        new Error(`github GET ${path} -> ${initial.status} ${(await initial.text()).slice(0, 200)}`),
+        { status: initial.status, retryable: initial.status === 404 || initial.status === 408
+          || initial.status === 429 || initial.status >= 500 });
       return initial;
     }
     const location = new URL(initial.headers.get("location") ?? "", GH);
     if (location.protocol !== "https:" || location.hostname !== "codeload.github.com") throw new Error("GitHub tarball redirect left the admitted codeload origin");
     const downloaded = await fetchImpl(location, { headers: { accept: "application/octet-stream", "user-agent": headers["user-agent"] }, redirect: "error" });
-    if (!downloaded.ok) throw new Error(`github codeload GET ${location.pathname} -> ${downloaded.status} ${(await downloaded.text()).slice(0, 200)}`);
+    if (!downloaded.ok) throw Object.assign(
+      new Error(`github codeload GET ${location.pathname} -> ${downloaded.status} ${(await downloaded.text()).slice(0, 200)}`),
+      { status: downloaded.status, retryable: downloaded.status === 404 || downloaded.status === 408
+        || downloaded.status === 429 || downloaded.status >= 500 });
     return downloaded;
   };
   return {
