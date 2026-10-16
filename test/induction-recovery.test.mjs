@@ -15,11 +15,12 @@ const setup = (t) => {
   t.after(() => rmSync(root, { recursive: true, force: true }));
   fixture(root); return root;
 };
-for (const mode of ["get-failure", "get-not-yet-visible", "crash-created", "patch-read-failure"]) {
+for (const mode of ["get-failure", "get-not-yet-visible", "crash-created", "patch-read-failure", "crash-ready"]) {
   test(`a fresh process resumes ${mode} using the retained repository ID without duplicate creation`, (t) => {
     const root = setup(t), failed = restart(root, mode);
-    assert.equal(failed.status, mode === "crash-created" ? 91 : 1, failed.stderr);
-    assert.equal(recordAt(root).state, mode === "crash-created" ? "repository-created" : "repository-receiving-pending");
+    assert.equal(failed.status, mode === "crash-created" ? 91 : mode === "crash-ready" ? 92 : 1, failed.stderr);
+    assert.equal(recordAt(root).state, mode === "crash-created" ? "repository-created"
+      : mode === "crash-ready" ? "repository-ready" : "repository-receiving-pending");
     assert.deepEqual(recordAt(root).createdRepository, { repository: "union/created", id: 123 });
     const recovered = restart(root, "healthy");
     assert.equal(recovered.status, 0, recovered.stderr);
@@ -34,6 +35,34 @@ for (const mode of ["get-failure", "get-not-yet-visible", "crash-created", "patc
     assert.deepEqual(remoteAt(root), remote);
   });
 }
+for (const mode of ["source-unavailable", "source-read-unavailable"]) {
+  test(`an ID-backed replay retains the repository after ${mode} and resumes on a later process`, (t) => {
+    const root = setup(t);
+    assert.equal(restart(root, "get-failure").status, 1);
+    const failed = restart(root, mode);
+    assert.equal(failed.status, 1);
+    assert.match(failed.stderr, /temporarily unavailable/);
+    assert.equal(recordAt(root).state, "repository-receiving-pending");
+    assert.deepEqual(recordAt(root).createdRepository, { repository: "union/created", id: 123 });
+    assert.equal(remoteAt(root).creates, 1); assert.equal(remoteAt(root).refs, 0);
+    const recovered = restart(root, "healthy");
+    assert.equal(recovered.status, 0, recovered.stderr);
+    assert.equal(JSON.parse(recovered.stdout).disposition, "bound");
+    assert.equal(remoteAt(root).creates, 1);
+    assert.equal(remoteAt(root).commits, 1); assert.equal(remoteAt(root).refs, 1);
+  });
+}
+test("two receivers replaying the same ready boundary publish one commit/ref", async (t) => {
+  const root = setup(t);
+  assert.equal(restart(root, "crash-ready").status, 92);
+  const results = await Promise.allSettled([run(root), run(root)]);
+  assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
+  assert.equal(results.filter((result) => result.status === "rejected").length, 1);
+  assert.equal(recordAt(root).state, "bound");
+  assert.equal(remoteAt(root).creates, 1);
+  assert.equal(remoteAt(root).commits, 1);
+  assert.equal(remoteAt(root).refs, 1);
+});
 test("an unresolved settings attempt is observed on restart but never blindly repeated", (t) => {
   const root = setup(t);
   assert.equal(restart(root, "patch-pending").status, 1);
