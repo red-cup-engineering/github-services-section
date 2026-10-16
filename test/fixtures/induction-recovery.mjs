@@ -42,6 +42,7 @@ export function store(root, mode) {
       const result = { ...next, operation: key, version: (current?.version ?? 0) + 1 };
       write(path, result);
       if (mode === "crash-created" && result.state === "repository-created") process.exit(91);
+      if (mode === "crash-ready" && result.state === "repository-ready") process.exit(92);
       return result;
     },
   };
@@ -88,8 +89,16 @@ export function api(root, mode = "healthy", beforeGet = async () => {}) {
       if (mode.startsWith("patch-")) return response({ message: "update response lost" }, 503);
       return response(remote.repository);
     } }),
-    downloadRepositoryTarball: async (_repo, _commit, destination) => cpSync(join(root, "source.tar.gz"), destination),
-    getTreeEntries: async () => [{ path: "file.txt", mode: "100644", type: "blob", sha: "old-blob" }],
+    downloadRepositoryTarball: async (_repo, _commit, destination) => {
+      if (mode === "source-unavailable") throw Object.assign(
+        new Error("source archive temporarily unavailable"), { status: 503, retryable: true });
+      return cpSync(join(root, "source.tar.gz"), destination);
+    },
+    getTreeEntries: async () => {
+      if (mode === "source-read-unavailable") throw Object.assign(
+        new Error("source tree temporarily unavailable"), { status: 503, retryable: true });
+      return [{ path: "file.txt", mode: "100644", type: "blob", sha: "old-blob" }];
+    },
     getContentBytes: async () => Buffer.from(mode === "verification-denied" ? "drift\n" : "before\n"),
     createBlob: async () => { mutate((r) => { r.blobs++; }); return { sha: "blob" }; },
     createTree: async () => { mutate((r) => { r.trees++; }); return { sha: "tree" }; },
