@@ -5,7 +5,7 @@ export const STATES = Object.freeze(["received", "admitted", "materialized", "ve
 const TERMINAL = new Set(["bound", "refused", "publication-uncertain", "response-delivered"]);
 const RECEIVING = new Set(["repository-created", "repository-receiving", "repository-defaults-attempted", "repository-receiving-pending"]);
 // A durable repository-ready transition precedes fallible Git object publication.
- // It is a recoverable boundary, not evidence that a branch or commit exists.
+// It is a recoverable boundary, not evidence that a branch or commit exists.
 const RESUMABLE = new Set(["admitted", "materialized", "verified", "repository-ready", ...RECEIVING]);
 const TRANSPORT_CODES = new Set(["ECONNRESET", "ECONNREFUSED", "ETIMEDOUT", "EAI_AGAIN",
   "ENETUNREACH", "EHOSTUNREACH", "UND_ERR_CONNECT_TIMEOUT", "UND_ERR_SOCKET"]);
