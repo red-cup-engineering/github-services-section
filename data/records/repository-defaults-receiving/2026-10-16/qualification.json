@@ -1,0 +1,156 @@
+{
+  "kind": "github-repository-defaults-source-qualification",
+  "observedAt": "2026-10-16T15:57:10.640577+00:00",
+  "baseSourceHead": "251350247c19ee360e9a0ac4aaec32fe35e32200",
+  "owner": "@red-cup-engineering/github-services-section",
+  "nodeVersion": "24.19.0",
+  "sharedLease": {
+    "path": "/run/user/1000/agent-heavy.lock",
+    "checkAndTestsHeldExclusiveLease": true,
+    "packageHeldExclusiveLease": true,
+    "noBypass": true
+  },
+  "tests": {
+    "observedAt": "2026-10-16T15:44:33.435638+00:00",
+    "commands": [
+      {
+        "command": [
+          "npm",
+          "run",
+          "check"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "npm",
+          "test"
+        ],
+        "exit": 0
+      }
+    ],
+    "files": [
+      "github-api.test.mjs",
+      "induction-saga.test.mjs",
+      "post-attempt.test.mjs",
+      "protected-source-authorization.test.mjs",
+      "repository-defaults-cli.test.mjs",
+      "software-induction.test.mjs"
+    ],
+    "passed": 31,
+    "failed": 0,
+    "skipped": 0
+  },
+  "dependencies": [
+    {
+      "name": "@red-cup-engineering/computer-content-address-engineering-services-section",
+      "expected": "0.2.0",
+      "actual": "0.2.0"
+    },
+    {
+      "name": "@red-cup-engineering/cryptographic-computer-data-engineering-services-section",
+      "expected": "0.3.1",
+      "actual": "0.3.1"
+    },
+    {
+      "name": "@red-cup-engineering/json-services-section",
+      "expected": "0.4.0",
+      "actual": "0.4.0"
+    },
+    {
+      "name": "@red-cup-engineering/javascript-node-services-section",
+      "expected": "0.3.2",
+      "actual": "0.3.2"
+    },
+    {
+      "name": "@red-cup-engineering/computer-system-engine",
+      "expected": "0.1.2",
+      "actual": "0.1.2"
+    }
+  ],
+  "sourceSha256": {
+    "package.json": "f8adad820c2ec91a9f2c3cb803afc2150e4996eef015387551f2b4525e716477",
+    "src/github-api.mjs": "c725e018b9b885c6e580b699baeb86419dde6f48797f0b742e872c765a807a5a",
+    "src/induction-saga.mjs": "87344c7d3c85900d79d7604dfdce5c904750e87d284d334eed5b2f76cb0e54f7",
+    "src/protected-source-authorization.mjs": "2583d6f15bae43efb70ff2ee827bcb0d3876185869630579d8479744a04242f2",
+    "src/software-induction.mjs": "876fd376ef70beb8207d8434442c4c41bb513e0be9b21395e7d98a9281f4a097",
+    "scripts/authorize-protected-source.mjs": "e4b4d955a5f2a0fe6b1467631c07a04f6ff3521a99c22f27d449a9631bcabff6",
+    "scripts/reconcile-repository-defaults.mjs": "7c0dbb49fe6a15f4fbbcd3c99ea00948a708d0c989aa5c9a10c929825ffde25b",
+    "test/github-api.test.mjs": "303359942731de9b4069953a170967504f2bb49caf7267d90db608cbc9612e53",
+    "test/induction-saga.test.mjs": "7f1c8080010be45cf53937537f458e2a7c070ef50e4ca5146fa28b64c34362c9",
+    "test/post-attempt.test.mjs": "9ccc3805f1691a88e5bc06665e1a3b43834ac8cf4c097612be650fcf3bbab265",
+    "test/protected-source-authorization.test.mjs": "d9927831f0f52b19a601af35a7b64b586a190be3c220479d171e98dbd39c2e5c",
+    "test/repository-defaults-cli.test.mjs": "3068bb6845376f874767b72616843c7aff81cc535979f3df375549e221687d09",
+    "test/software-induction.test.mjs": "d14922d9f85af37e4ae3e17c9ac70ff53d2e8948c6c009b28461bc73d65404f2"
+  },
+  "sourceUnchangedSinceTests": true,
+  "package": {
+    "observedAt": "2026-10-16T15:55:04.251248+00:00",
+    "command": [
+      "npm",
+      "pack",
+      "--ignore-scripts",
+      "--json"
+    ],
+    "name": "@red-cup-engineering/github-services-section",
+    "version": "0.1.1",
+    "integrity": "sha512-cbCSGyleZ4IqDeYxPsR0hqXYHZp9CxzJNE0gLOHX+GOodA5ihXUDGJYMRe9a22vrvznds702pbGCilGpILnFxg==",
+    "shasum": "dcd7c46d0c5ebb2847b3e8e696bccf954f646ab6",
+    "files": 8,
+    "packedBytesMatchReviewSource": true,
+    "binPresent": true
+  },
+  "packagedCliReceiving": {
+    "observedAt": "2026-10-16T15:55:20.677747+00:00",
+    "commands": [
+      {
+        "mode": "plan",
+        "exit": 0,
+        "observations": [
+          {
+            "repository": "561-group/assay.561.group",
+            "id": 1313100453,
+            "before": true,
+            "disposition": "already-enabled",
+            "changed": false,
+            "observedAt": "2026-10-16T15:55:18.919Z"
+          },
+          {
+            "repository": "red-cup-engineering/computer-web-engineering-services-section",
+            "id": 1322295518,
+            "before": true,
+            "disposition": "already-enabled",
+            "changed": false,
+            "observedAt": "2026-10-16T15:55:19.526Z"
+          }
+        ]
+      },
+      {
+        "mode": "apply",
+        "exit": 0,
+        "observations": [
+          {
+            "repository": "561-group/assay.561.group",
+            "id": 1313100453,
+            "before": true,
+            "disposition": "already-enabled",
+            "changed": false,
+            "observedAt": "2026-10-16T15:55:20.147Z"
+          },
+          {
+            "repository": "red-cup-engineering/computer-web-engineering-services-section",
+            "id": 1322295518,
+            "before": true,
+            "disposition": "already-enabled",
+            "changed": false,
+            "observedAt": "2026-10-16T15:55:20.672Z"
+          }
+        ]
+      }
+    ],
+    "mutations": 0
+  },
+  "priorSweepReceiptValidatedRows": 117,
+  "providerContract": "https://docs.github.com/en/rest/repos/repos#create-an-organization-repository",
+  "limitations": "Creation and mutation contract behavior qualified through provider-boundary tests; packaged CLI used live authenticated GET observations of two already-enabled repositories. No new repository was created for qualification. Source review and integration are separate; no package publication or deployment occurred."
+}

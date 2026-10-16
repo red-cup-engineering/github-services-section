@@ -16,7 +16,8 @@
     "./induction-saga": "./src/induction-saga.mjs"
   },
   "bin": {
-    "authorize-protected-source": "./scripts/authorize-protected-source.mjs"
+    "authorize-protected-source": "./scripts/authorize-protected-source.mjs",
+    "reconcile-github-repository-defaults": "./scripts/reconcile-repository-defaults.mjs"
   },
   "files": [
     "src",
@@ -25,7 +26,7 @@
     "package.json"
   ],
   "scripts": {
-    "check": "node --check src/*.mjs && node --check scripts/authorize-protected-source.mjs",
+    "check": "node --check src/*.mjs && node --check scripts/authorize-protected-source.mjs && node --check scripts/reconcile-repository-defaults.mjs",
     "test": "node --test test/*.test.mjs"
   },
   "private": false

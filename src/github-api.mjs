@@ -4,6 +4,11 @@
 // actions:write + actions:read on the RUNNER repo. It is never exposed to untrusted job code.
 const GH = "https://api.github.com";
 const REPOSITORY = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u;
+const exactRepository = (value) => typeof value === "string" && REPOSITORY.test(value)
+  && value.split("/").every((part) => part !== "." && part !== "..");
+const defaultsRefusal = (message) => Object.assign(new Error(message), { code: "REPOSITORY_DEFAULTS_REFUSED" });
+export const isDefinitiveGithubRejection = (error) => error?.code === "REPOSITORY_DEFAULTS_REFUSED"
+  || (error?.status >= 400 && error.status < 500 && ![408, 429].includes(error.status) && !error.retryable);
 const DEFAULT_TARBALL_LIMIT = 64 * 1024 * 1024;
 
 async function boundedBytes(response, maximumBytes) {
@@ -34,7 +39,11 @@ export function githubApi({ fetchImpl = fetch } = {}) {
   if (token) headers.authorization = `Bearer ${token}`;
   const j = async (method, path, body) => {
     const res = await fetchImpl(`${GH}${path}`, { method, headers, ...(body ? { body: JSON.stringify(body) } : {}) });
-    if (!res.ok) throw new Error(`github ${method} ${path} -> ${res.status} ${(await res.text()).slice(0, 200)}`);
+    if (!res.ok) throw Object.assign(new Error(`github ${method} ${path} -> ${res.status} ${(await res.text()).slice(0, 200)}`), {
+      status: res.status,
+      retryable: (method === "GET" && res.status === 404)
+        || res.headers.has("retry-after") || res.headers.get("x-ratelimit-remaining") === "0",
+    });
     return res.status === 204 ? {} : res.json();
   };
   const repositoryArchiveResponse = async (repo, ref) => {
@@ -43,13 +52,19 @@ export function githubApi({ fetchImpl = fetch } = {}) {
     const path = `/repos/${repo}/tarball${suffix}`;
     const initial = await fetchImpl(`${GH}${path}`, { headers, redirect: "manual" });
     if (![301, 302, 303, 307, 308].includes(initial.status)) {
-      if (!initial.ok) throw new Error(`github GET ${path} -> ${initial.status} ${(await initial.text()).slice(0, 200)}`);
+      if (!initial.ok) throw Object.assign(
+        new Error(`github GET ${path} -> ${initial.status} ${(await initial.text()).slice(0, 200)}`),
+        { status: initial.status, retryable: initial.status === 404 || initial.status === 408
+          || initial.status === 429 || initial.status >= 500 });
       return initial;
     }
     const location = new URL(initial.headers.get("location") ?? "", GH);
     if (location.protocol !== "https:" || location.hostname !== "codeload.github.com") throw new Error("GitHub tarball redirect left the admitted codeload origin");
     const downloaded = await fetchImpl(location, { headers: { accept: "application/octet-stream", "user-agent": headers["user-agent"] }, redirect: "error" });
-    if (!downloaded.ok) throw new Error(`github codeload GET ${location.pathname} -> ${downloaded.status} ${(await downloaded.text()).slice(0, 200)}`);
+    if (!downloaded.ok) throw Object.assign(
+      new Error(`github codeload GET ${location.pathname} -> ${downloaded.status} ${(await downloaded.text()).slice(0, 200)}`),
+      { status: downloaded.status, retryable: downloaded.status === 404 || downloaded.status === 408
+        || downloaded.status === 429 || downloaded.status >= 500 });
     return downloaded;
   };
   return {
@@ -95,12 +110,21 @@ export function githubApi({ fetchImpl = fetch } = {}) {
     },
     async createCommit(repo, { message, tree, parents }) { return j("POST", `/repos/${repo}/git/commits`, { message, tree, parents }); },
     async createOrgRepository(org, { name, description, visibility = "public" }) {
+      const repository = `${org}/${name}`;
+      if (!exactRepository(repository)) throw new TypeError("GitHub repository must be owner/name");
+      // Return the mutation receipt directly. The induction owner must persist
+      // its identity before making any fallible receiving call.
       return j("POST", `/orgs/${encodeURIComponent(org)}/repos`, {
         name,
         description,
         visibility,
         auto_init: false,
+        delete_branch_on_merge: true,
       });
+    },
+    async enableMergedBranchDeletion(repo) {
+      if (!exactRepository(repo)) throw new TypeError("GitHub repository must be owner/name");
+      return j("PATCH", `/repos/${repo}`, { delete_branch_on_merge: true });
     },
     async updateRef(repo, ref, sha) { return j("PATCH", `/repos/${repo}/git/refs/${ref.split("/").map(encodeURIComponent).join("/")}`, { sha, force: false }); },
     async getFileSha(repo, path, branch) {
@@ -170,6 +194,45 @@ export function githubApi({ fetchImpl = fetch } = {}) {
       return { passed: run.conclusion === "success", output: `run ${runId} conclusion=${run.conclusion}`, runId, durationSeconds };
     },
   };
+}
+
+/** Reconcile only the merged-PR branch default for one independently selected
+ * repository identity. This neither deletes existing refs nor changes access. */
+export async function reconcileRepositoryDefaults({ repository, expectedId, apply = false, onAttempt = () => {} }, api) {
+  if (!exactRepository(repository) || !Number.isSafeInteger(expectedId) || expectedId < 1 || typeof apply !== "boolean") {
+    throw new TypeError("repository defaults require owner/name and an exact numeric repository ID");
+  }
+  const admit = (value) => {
+    if (value?.id !== expectedId || value.full_name?.toLowerCase() !== repository.toLowerCase()) {
+      throw defaultsRefusal(`repository identity changed: ${repository}`);
+    }
+    return value;
+  };
+  const before = admit(await api.getRepo(repository));
+  const result = { repository: before.full_name, id: expectedId, before: before.delete_branch_on_merge };
+  if (before.archived || before.disabled) return { ...result, disposition: "skipped-inactive", changed: false };
+  if (before.delete_branch_on_merge === true) return { ...result, disposition: "already-enabled", changed: false };
+  if (before.delete_branch_on_merge !== false) throw defaultsRefusal(`repository branch default unavailable: ${repository}`);
+  if (before.permissions?.admin !== true) throw defaultsRefusal(`repository administration unavailable: ${repository}`);
+  if (!apply) return { ...result, disposition: "would-enable", changed: false };
+  await onAttempt();
+  let patchError;
+  try { await api.enableMergedBranchDeletion(repository); } catch (error) { patchError = error; }
+  // A failed response is not proof the update failed. Always read back; never
+  // retry a mutation to resolve uncertainty. A replay starts with the same GET.
+  let after;
+  try { after = admit(await api.getRepo(repository)); } catch (error) {
+    if (isDefinitiveGithubRejection(patchError)) throw patchError;
+    throw error;
+  }
+  if (after.delete_branch_on_merge !== true) {
+    if (isDefinitiveGithubRejection(patchError)) throw patchError;
+    throw new Error(`repository branch default was not received: ${repository}`, { cause: patchError });
+  }
+  for (const key of ["archived", "disabled", "visibility", "default_branch"]) {
+    if (after[key] !== before[key]) throw defaultsRefusal(`repository ${key} changed during defaults receiving: ${repository}`);
+  }
+  return { ...result, after: true, disposition: patchError ? "enabled-after-uncertain-response" : "enabled", changed: true };
 }
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
