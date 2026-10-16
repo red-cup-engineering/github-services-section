@@ -4,7 +4,19 @@ import { isDefinitiveGithubRejection } from "./github-api.mjs";
 export const STATES = Object.freeze(["received", "admitted", "materialized", "verified", "repository-creation-attempted", "repository-creation-uncertain", "repository-created", "repository-receiving", "repository-defaults-attempted", "repository-receiving-pending", "repository-ready", "publication-attempted", "bound", "refused", "publication-uncertain", "response-delivered"]);
 const TERMINAL = new Set(["bound", "refused", "publication-uncertain", "response-delivered"]);
 const RECEIVING = new Set(["repository-created", "repository-receiving", "repository-defaults-attempted", "repository-receiving-pending"]);
-const RESUMABLE = new Set(["admitted", "materialized", "verified", ...RECEIVING]);
+// A durable repository-ready transition precedes fallible Git object publication.
+ // It is a recoverable boundary, not evidence that a branch or commit exists.
+const RESUMABLE = new Set(["admitted", "materialized", "verified", "repository-ready", ...RECEIVING]);
+const TRANSPORT_CODES = new Set(["ECONNRESET", "ECONNREFUSED", "ETIMEDOUT", "EAI_AGAIN",
+  "ENETUNREACH", "EHOSTUNREACH", "UND_ERR_CONNECT_TIMEOUT", "UND_ERR_SOCKET"]);
+function transientSourceOrProviderFailure(error) {
+  if (isDefinitiveGithubRejection(error)) return false;
+  if (error?.retryable === true || error?.status === 408 || error?.status === 429
+      || (Number.isInteger(error?.status) && error.status >= 500 && error.status < 600)
+      || TRANSPORT_CODES.has(error?.code)) return true;
+  return error?.cause && error.cause !== error
+    ? transientSourceOrProviderFailure(error.cause) : false;
+}
 const errorBody = (error) => ({ name: error instanceof Error ? error.name : "Error", message: error instanceof Error ? error.message : String(error) });
 
 /**
@@ -74,7 +86,9 @@ export async function executeInductionSaga(request, { induce, provider = {}, ope
       // same-name repository or issuing POST again after an ambiguous attempt.
       const state = saga.state === "repository-creation-attempted" && !isDefinitiveGithubRejection(error)
         ? "repository-creation-uncertain"
-        : saga.createdRepository && RECEIVING.has(saga.state) && !isDefinitiveGithubRejection(error)
+        : saga.createdRepository && (
+            (RECEIVING.has(saga.state) && !isDefinitiveGithubRejection(error))
+            || (RESUMABLE.has(saga.state) && transientSourceOrProviderFailure(error)))
           ? "repository-receiving-pending" : "refused";
       await transition(state, { error: errorBody(error) });
     }
