@@ -2,6 +2,27 @@
 
 This package owns bounded GitHub API contracts shared by automation.
 
+`githubApi().createOrgRepository` explicitly enables `delete_branch_on_merge`
+and reads the created repository back before returning. This default reaches
+the existing sovereign software-induction creation path; GitHub's omitted-field
+default is false.
+
+`reconcile-github-repository-defaults SELECTION.json [plan|apply]` repairs drift
+using the existing authenticated GitHub CLI. The JSON selection is an array of
+`{ "repository": "owner/name", "expectedId": 123 }` records whose ownership and
+authority the caller has already verified. The default mode is read-only. Apply
+mode checks the current identity and administrator capability, skips archived
+or disabled repositories, and sends only `{ "delete_branch_on_merge": true }`.
+Every attempted change is read back, including uncertain responses; replays of
+enabled repositories do not write. Results are emitted per repository as JSON
+lines, and any failed item makes the command exit unsuccessfully.
+
+The reconciler does not enumerate or delete existing refs, widen access,
+unarchive repositories, or create a schedule. Protected branches remain subject
+to GitHub's existing controls. Run it from the existing authorized provisioning
+or maintenance work when checking repository defaults; unverified personal
+repositories are not an implied selection.
+
 `authorize-protected-source` separates an immutable release source from the
 moving tip of its protected branch. It compares the requested full commit to
 the current protected ref through GitHub's compare API and admits only an exact

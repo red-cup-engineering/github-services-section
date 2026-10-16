@@ -1,0 +1,167 @@
+{
+  "kind": "github-repository-defaults-receiving",
+  "recordedAt": "2026-10-16T15:45:55.336930+00:00",
+  "request": "2026-10-16 user instruction to enable automatic deletion of merged PR source branches on verified Group repositories",
+  "transport": "existing authenticated GitHub CLI, GET and PATCH /repos/{owner}/{repo}; no new credentials",
+  "mutationPayload": {
+    "delete_branch_on_merge": true
+  },
+  "inventoryStartedAt": "2026-10-16T15:19:32.353851+00:00",
+  "inventoryFinishedAt": "2026-10-16T15:19:55.285238+00:00",
+  "inventoryPages": [
+    {
+      "owner": "561-group",
+      "endpoint": "orgs/561-group/repos?type=all&per_page=100&sort=full_name&direction=asc&page=1",
+      "returned": 26,
+      "selected": 26,
+      "terminal": true
+    },
+    {
+      "owner": "red-cup-engineering",
+      "endpoint": "orgs/red-cup-engineering/repos?type=all&per_page=100&sort=full_name&direction=asc&page=1",
+      "returned": 100,
+      "selected": 100,
+      "terminal": false
+    },
+    {
+      "owner": "red-cup-engineering",
+      "endpoint": "orgs/red-cup-engineering/repos?type=all&per_page=100&sort=full_name&direction=asc&page=2",
+      "returned": 100,
+      "selected": 100,
+      "terminal": false
+    },
+    {
+      "owner": "red-cup-engineering",
+      "endpoint": "orgs/red-cup-engineering/repos?type=all&per_page=100&sort=full_name&direction=asc&page=3",
+      "returned": 77,
+      "selected": 77,
+      "terminal": true
+    },
+    {
+      "owner": "coesite-operations",
+      "endpoint": "orgs/coesite-operations/repos?type=all&per_page=100&sort=full_name&direction=asc&page=1",
+      "returned": 20,
+      "selected": 20,
+      "terminal": true
+    },
+    {
+      "owner": "lenticule-science",
+      "endpoint": "orgs/lenticule-science/repos?type=all&per_page=100&sort=full_name&direction=asc&page=1",
+      "returned": 39,
+      "selected": 39,
+      "terminal": true
+    },
+    {
+      "owner": "causeway-services",
+      "endpoint": "orgs/causeway-services/repos?type=all&per_page=100&sort=full_name&direction=asc&page=1",
+      "returned": 41,
+      "selected": 41,
+      "terminal": true
+    },
+    {
+      "owner": "emsenn",
+      "endpoint": "user/repos?affiliation=owner&per_page=100&sort=full_name&direction=asc&page=1",
+      "returned": 100,
+      "selected": 100,
+      "terminal": false
+    },
+    {
+      "owner": "emsenn",
+      "endpoint": "user/repos?affiliation=owner&per_page=100&sort=full_name&direction=asc&page=2",
+      "returned": 100,
+      "selected": 100,
+      "terminal": false
+    },
+    {
+      "owner": "emsenn",
+      "endpoint": "user/repos?affiliation=owner&per_page=100&sort=full_name&direction=asc&page=3",
+      "returned": 100,
+      "selected": 100,
+      "terminal": false
+    },
+    {
+      "owner": "emsenn",
+      "endpoint": "user/repos?affiliation=owner&per_page=100&sort=full_name&direction=asc&page=4",
+      "returned": 76,
+      "selected": 76,
+      "terminal": true
+    }
+  ],
+  "distinctRepositoriesInventoried": 779,
+  "inventoryErrors": [],
+  "coverage": [
+    {
+      "owner": "561-group",
+      "inventoried": 26,
+      "selected": 26,
+      "changedAndIndependentlyVerified": 6,
+      "alreadyEnabled": 18,
+      "archivedOrDisabledSkipped": 2
+    },
+    {
+      "owner": "red-cup-engineering",
+      "inventoried": 277,
+      "selected": 277,
+      "changedAndIndependentlyVerified": 105,
+      "alreadyEnabled": 172,
+      "archivedOrDisabledSkipped": 0
+    },
+    {
+      "owner": "coesite-operations",
+      "inventoried": 20,
+      "selected": 20,
+      "changedAndIndependentlyVerified": 3,
+      "alreadyEnabled": 17,
+      "archivedOrDisabledSkipped": 0
+    },
+    {
+      "owner": "lenticule-science",
+      "inventoried": 39,
+      "selected": 39,
+      "changedAndIndependentlyVerified": 0,
+      "alreadyEnabled": 39,
+      "archivedOrDisabledSkipped": 0
+    },
+    {
+      "owner": "causeway-services",
+      "inventoried": 41,
+      "selected": 41,
+      "changedAndIndependentlyVerified": 3,
+      "alreadyEnabled": 37,
+      "archivedOrDisabledSkipped": 1
+    },
+    {
+      "owner": "emsenn",
+      "inventoried": 376,
+      "selected": 9,
+      "changedAndIndependentlyVerified": 0,
+      "alreadyEnabled": 9,
+      "archivedOrDisabledSkipped": 0
+    }
+  ],
+  "settings": {
+    "changedAndIndependentlyVerified": 117,
+    "alreadyEnabled": 292,
+    "activeEligibleEnabled": 409,
+    "archivedOrDisabledSkipped": [
+      "561-group/2026-08-04-561-group-dynamic-site",
+      "561-group/561-group-site-release-scratch-2026-07-22",
+      "causeway-services/koios-news-site-legacy"
+    ],
+    "unverifiedPersonalExcluded": 367,
+    "initialReadbackDelaysResolved": 3,
+    "unresolvedChanges": 0
+  },
+  "settingsWriterFinishedAt": "2026-10-16T15:31:40.577389+00:00",
+  "independentReadbackAt": "2026-10-16T15:33:23.315748+00:00",
+  "evidenceSha256": {
+    "verified-changes.jsonl": "d9a94066ba9454a8d329451ea603a2f77625262294edc6be0fe519b9ca3aee95",
+    "exact-setting-changes.csv": "90b802d6fc671454479d0b06c409a6df2fd7484eb0f08b15f3007c44b9bd0b7a"
+  },
+  "excludedData": "No credentials, environment-file contents, private-client material or unverified personal-repository names are included.",
+  "boundaries": "Only delete_branch_on_merge changed. No repository access, protection, ownership, visibility, archive state, schedules or package publication changed. Existing branch cleanup has separate Git Services receipts.",
+  "sourceEvidenceSha256": {
+    "exact-setting-changes.csv": "e41f9f2373b00828e8e8ff0b693253d6ffc26728f765da902fbe9452930bf605"
+  },
+  "csvNormalization": "CRLF converted to LF for source storage; parsed records unchanged."
+}

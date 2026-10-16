@@ -4,6 +4,8 @@
 // actions:write + actions:read on the RUNNER repo. It is never exposed to untrusted job code.
 const GH = "https://api.github.com";
 const REPOSITORY = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u;
+const exactRepository = (value) => typeof value === "string" && REPOSITORY.test(value)
+  && value.split("/").every((part) => part !== "." && part !== "..");
 const DEFAULT_TARBALL_LIMIT = 64 * 1024 * 1024;
 
 async function boundedBytes(response, maximumBytes) {
@@ -95,12 +97,25 @@ export function githubApi({ fetchImpl = fetch } = {}) {
     },
     async createCommit(repo, { message, tree, parents }) { return j("POST", `/repos/${repo}/git/commits`, { message, tree, parents }); },
     async createOrgRepository(org, { name, description, visibility = "public" }) {
-      return j("POST", `/orgs/${encodeURIComponent(org)}/repos`, {
+      const repository = `${org}/${name}`;
+      if (!exactRepository(repository)) throw new TypeError("GitHub repository must be owner/name");
+      const created = await j("POST", `/orgs/${encodeURIComponent(org)}/repos`, {
         name,
         description,
         visibility,
         auto_init: false,
+        delete_branch_on_merge: true,
       });
+      const received = await reconcileRepositoryDefaults({ repository, expectedId: created.id, apply: true }, {
+        getRepo: (repo) => j("GET", `/repos/${repo}`),
+        enableMergedBranchDeletion: (repo) => j("PATCH", `/repos/${repo}`, { delete_branch_on_merge: true }),
+      });
+      if (received.before !== true && received.after !== true) throw new Error(`created repository branch default was not received: ${repository}`);
+      return { ...created, delete_branch_on_merge: true };
+    },
+    async enableMergedBranchDeletion(repo) {
+      if (!exactRepository(repo)) throw new TypeError("GitHub repository must be owner/name");
+      return j("PATCH", `/repos/${repo}`, { delete_branch_on_merge: true });
     },
     async updateRef(repo, ref, sha) { return j("PATCH", `/repos/${repo}/git/refs/${ref.split("/").map(encodeURIComponent).join("/")}`, { sha, force: false }); },
     async getFileSha(repo, path, branch) {
@@ -170,6 +185,39 @@ export function githubApi({ fetchImpl = fetch } = {}) {
       return { passed: run.conclusion === "success", output: `run ${runId} conclusion=${run.conclusion}`, runId, durationSeconds };
     },
   };
+}
+
+/** Reconcile only the merged-PR branch default for one independently selected
+ * repository identity. This neither deletes existing refs nor changes access. */
+export async function reconcileRepositoryDefaults({ repository, expectedId, apply = false }, api) {
+  if (!exactRepository(repository) || !Number.isSafeInteger(expectedId) || expectedId < 1 || typeof apply !== "boolean") {
+    throw new TypeError("repository defaults require owner/name and an exact numeric repository ID");
+  }
+  const admit = (value) => {
+    if (value?.id !== expectedId || value.full_name?.toLowerCase() !== repository.toLowerCase()) {
+      throw new Error(`repository identity changed: ${repository}`);
+    }
+    return value;
+  };
+  const before = admit(await api.getRepo(repository));
+  const result = { repository: before.full_name, id: expectedId, before: before.delete_branch_on_merge };
+  if (before.archived || before.disabled) return { ...result, disposition: "skipped-inactive", changed: false };
+  if (before.delete_branch_on_merge === true) return { ...result, disposition: "already-enabled", changed: false };
+  if (before.delete_branch_on_merge !== false) throw new Error(`repository branch default unavailable: ${repository}`);
+  if (before.permissions?.admin !== true) throw new Error(`repository administration unavailable: ${repository}`);
+  if (!apply) return { ...result, disposition: "would-enable", changed: false };
+  let patchError;
+  try { await api.enableMergedBranchDeletion(repository); } catch (error) { patchError = error; }
+  // A failed response is not proof the update failed. Always read back; never
+  // retry a mutation to resolve uncertainty. A replay starts with the same GET.
+  const after = admit(await api.getRepo(repository));
+  if (after.delete_branch_on_merge !== true) {
+    throw new Error(`repository branch default was not received: ${repository}`, { cause: patchError });
+  }
+  for (const key of ["archived", "disabled", "visibility", "default_branch"]) {
+    if (after[key] !== before[key]) throw new Error(`repository ${key} changed during defaults receiving: ${repository}`);
+  }
+  return { ...result, after: true, disposition: patchError ? "enabled-after-uncertain-response" : "enabled", changed: true };
 }
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
