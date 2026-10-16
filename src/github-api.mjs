@@ -6,6 +6,9 @@ const GH = "https://api.github.com";
 const REPOSITORY = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u;
 const exactRepository = (value) => typeof value === "string" && REPOSITORY.test(value)
   && value.split("/").every((part) => part !== "." && part !== "..");
+const defaultsRefusal = (message) => Object.assign(new Error(message), { code: "REPOSITORY_DEFAULTS_REFUSED" });
+export const isDefinitiveGithubRejection = (error) => error?.code === "REPOSITORY_DEFAULTS_REFUSED"
+  || (error?.status >= 400 && error.status < 500 && ![408, 429].includes(error.status) && !error.retryable);
 const DEFAULT_TARBALL_LIMIT = 64 * 1024 * 1024;
 
 async function boundedBytes(response, maximumBytes) {
@@ -36,7 +39,11 @@ export function githubApi({ fetchImpl = fetch } = {}) {
   if (token) headers.authorization = `Bearer ${token}`;
   const j = async (method, path, body) => {
     const res = await fetchImpl(`${GH}${path}`, { method, headers, ...(body ? { body: JSON.stringify(body) } : {}) });
-    if (!res.ok) throw new Error(`github ${method} ${path} -> ${res.status} ${(await res.text()).slice(0, 200)}`);
+    if (!res.ok) throw Object.assign(new Error(`github ${method} ${path} -> ${res.status} ${(await res.text()).slice(0, 200)}`), {
+      status: res.status,
+      retryable: (method === "GET" && res.status === 404)
+        || res.headers.has("retry-after") || res.headers.get("x-ratelimit-remaining") === "0",
+    });
     return res.status === 204 ? {} : res.json();
   };
   const repositoryArchiveResponse = async (repo, ref) => {
@@ -99,19 +106,15 @@ export function githubApi({ fetchImpl = fetch } = {}) {
     async createOrgRepository(org, { name, description, visibility = "public" }) {
       const repository = `${org}/${name}`;
       if (!exactRepository(repository)) throw new TypeError("GitHub repository must be owner/name");
-      const created = await j("POST", `/orgs/${encodeURIComponent(org)}/repos`, {
+      // Return the mutation receipt directly. The induction owner must persist
+      // its identity before making any fallible receiving call.
+      return j("POST", `/orgs/${encodeURIComponent(org)}/repos`, {
         name,
         description,
         visibility,
         auto_init: false,
         delete_branch_on_merge: true,
       });
-      const received = await reconcileRepositoryDefaults({ repository, expectedId: created.id, apply: true }, {
-        getRepo: (repo) => j("GET", `/repos/${repo}`),
-        enableMergedBranchDeletion: (repo) => j("PATCH", `/repos/${repo}`, { delete_branch_on_merge: true }),
-      });
-      if (received.before !== true && received.after !== true) throw new Error(`created repository branch default was not received: ${repository}`);
-      return { ...created, delete_branch_on_merge: true };
     },
     async enableMergedBranchDeletion(repo) {
       if (!exactRepository(repo)) throw new TypeError("GitHub repository must be owner/name");
@@ -189,13 +192,13 @@ export function githubApi({ fetchImpl = fetch } = {}) {
 
 /** Reconcile only the merged-PR branch default for one independently selected
  * repository identity. This neither deletes existing refs nor changes access. */
-export async function reconcileRepositoryDefaults({ repository, expectedId, apply = false }, api) {
+export async function reconcileRepositoryDefaults({ repository, expectedId, apply = false, onAttempt = () => {} }, api) {
   if (!exactRepository(repository) || !Number.isSafeInteger(expectedId) || expectedId < 1 || typeof apply !== "boolean") {
     throw new TypeError("repository defaults require owner/name and an exact numeric repository ID");
   }
   const admit = (value) => {
     if (value?.id !== expectedId || value.full_name?.toLowerCase() !== repository.toLowerCase()) {
-      throw new Error(`repository identity changed: ${repository}`);
+      throw defaultsRefusal(`repository identity changed: ${repository}`);
     }
     return value;
   };
@@ -203,19 +206,25 @@ export async function reconcileRepositoryDefaults({ repository, expectedId, appl
   const result = { repository: before.full_name, id: expectedId, before: before.delete_branch_on_merge };
   if (before.archived || before.disabled) return { ...result, disposition: "skipped-inactive", changed: false };
   if (before.delete_branch_on_merge === true) return { ...result, disposition: "already-enabled", changed: false };
-  if (before.delete_branch_on_merge !== false) throw new Error(`repository branch default unavailable: ${repository}`);
-  if (before.permissions?.admin !== true) throw new Error(`repository administration unavailable: ${repository}`);
+  if (before.delete_branch_on_merge !== false) throw defaultsRefusal(`repository branch default unavailable: ${repository}`);
+  if (before.permissions?.admin !== true) throw defaultsRefusal(`repository administration unavailable: ${repository}`);
   if (!apply) return { ...result, disposition: "would-enable", changed: false };
+  await onAttempt();
   let patchError;
   try { await api.enableMergedBranchDeletion(repository); } catch (error) { patchError = error; }
   // A failed response is not proof the update failed. Always read back; never
   // retry a mutation to resolve uncertainty. A replay starts with the same GET.
-  const after = admit(await api.getRepo(repository));
+  let after;
+  try { after = admit(await api.getRepo(repository)); } catch (error) {
+    if (isDefinitiveGithubRejection(patchError)) throw patchError;
+    throw error;
+  }
   if (after.delete_branch_on_merge !== true) {
+    if (isDefinitiveGithubRejection(patchError)) throw patchError;
     throw new Error(`repository branch default was not received: ${repository}`, { cause: patchError });
   }
   for (const key of ["archived", "disabled", "visibility", "default_branch"]) {
-    if (after[key] !== before[key]) throw new Error(`repository ${key} changed during defaults receiving: ${repository}`);
+    if (after[key] !== before[key]) throw defaultsRefusal(`repository ${key} changed during defaults receiving: ${repository}`);
   }
   return { ...result, after: true, disposition: patchError ? "enabled-after-uncertain-response" : "enabled", changed: true };
 }

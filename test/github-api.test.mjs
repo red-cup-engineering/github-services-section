@@ -5,7 +5,7 @@ import { githubApi, reconcileRepositoryDefaults } from "../src/github-api.mjs";
 const repositorySnapshot = (extra = {}) => ({ id: 123, full_name: "union/project", archived: false,
   disabled: false, visibility: "private", default_branch: "main", permissions: { admin: true }, delete_branch_on_merge: false, ...extra });
 
-test("organization provisioning explicitly enables merged-branch deletion and receives the created identity", async () => {
+test("organization creation returns its numeric receipt without a fallible receiving call", async () => {
   const requests = [];
   const api = githubApi({ fetchImpl: async (url, init) => {
     requests.push({ url: String(url), method: init.method, body: init.body && JSON.parse(init.body) });
@@ -14,7 +14,6 @@ test("organization provisioning explicitly enables merged-branch deletion and re
   const created = await api.createOrgRepository("union", { name: "project", description: "source", visibility: "private" });
   assert.deepEqual(requests, [
     { url: "https://api.github.com/orgs/union/repos", method: "POST", body: { name: "project", description: "source", visibility: "private", auto_init: false, delete_branch_on_merge: true } },
-    { url: "https://api.github.com/repos/union/project", method: "GET", body: undefined },
   ]);
   assert.equal(created.id, 123);
   assert.equal(created.delete_branch_on_merge, true);

@@ -1,0 +1,201 @@
+{
+  "kind": "github-repository-provisioning-recovery-qualification",
+  "observedAt": "2026-10-16T16:20:30.114041+00:00",
+  "reviewedPredecessor": "75c7c41fed9f06d39377a1dd53edf2569a47549b",
+  "review": "https://github.com/red-cup-engineering/computer-web-engineering-services-section/pull/126#pullrequestreview-5550395716",
+  "owner": "@red-cup-engineering/github-services-section",
+  "nodeVersion": "24.19.0",
+  "sharedLease": {
+    "path": "/run/user/1000/agent-heavy.lock",
+    "ownerTestsHeld": true,
+    "packHeld": true,
+    "consumerTestsHeld": true,
+    "lastQualificationCompletedAt": "2026-10-16T16:18:07.189405+00:00",
+    "releasedAfterEachCommand": true
+  },
+  "ownerTests": {
+    "observedAt": "2026-10-16T16:16:59.038485+00:00",
+    "commands": [
+      {
+        "command": [
+          "npm",
+          "run",
+          "check"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "npm",
+          "test"
+        ],
+        "exit": 0
+      }
+    ],
+    "passed": 45,
+    "failed": 0,
+    "skipped": 0,
+    "cases": [
+      "organization creation returns its numeric receipt without a fallible receiving call",
+      "repository defaults repair only the one flag, read it back and replay without another write",
+      "repository defaults preview and inactive targets never mutate",
+      "repository defaults refuse identity, permission and missing-setting ambiguity before writing",
+      "uncertain update responses are reconciled by observation without a second mutation",
+      "a successful PATCH without matching readback cannot qualify repository defaults",
+      "repository tarball bytes cross the codeload boundary while credentials do not",
+      "the provider admits the existing GitHub runtime credential when its service alias is absent",
+      "tarball transport refuses foreign redirects and over-limit bodies",
+      "bounded public-compute GitHub observations and dispatch stay on the provider face",
+      "tree entry observations preserve blobs and gitlinks",
+      "a fresh process resumes get-failure using the retained repository ID without duplicate creation",
+      "a fresh process resumes get-not-yet-visible using the retained repository ID without duplicate creation",
+      "a fresh process resumes crash-created using the retained repository ID without duplicate creation",
+      "a fresh process resumes patch-read-failure using the retained repository ID without duplicate creation",
+      "an unresolved settings attempt is observed on restart but never blindly repeated",
+      "post-denied remains a genuine refusal across process restart",
+      "get-denied remains a genuine refusal across process restart",
+      "patch-denied remains a genuine refusal across process restart",
+      "identity-changed remains a genuine refusal across process restart",
+      "a lost POST response cannot authorize another creation or adoption by name",
+      "source verification denial during receiving recovery becomes a persistent refusal",
+      "a reused request ID cannot substitute another target during recovery",
+      "a resumed receiver fences the original invocation before publication",
+      "duplicate delivery resumes one exact operation without another mutation",
+      "reconciles GitHub commit identity after a crash following publication",
+      "a post-attempt ref identity mismatch is publication-uncertain and never reruns",
+      "response delivery failure does not rerun a bound mutation",
+      "compare-and-set grants one concurrent duplicate delivery the admission ownership",
+      "fails closed when no durable cloud operation store is injected",
+      "refuses by default (no gates set)",
+      "refuses even with enabled+confirm if the env kill-switch is off",
+      "with all three gates, runs the full comment->fork->branch->commit->PR sequence",
+      "an older exact source remains authorized when protected main advances",
+      "identical protected source is admitted but diverged or foreign source is refused",
+      "receipt mutation or receiver disagreement is refused",
+      "GitHub comparison snapshots the protected ref then compares two exact commits",
+      "the complete empty selection is refused before any provider command",
+      "the complete duplicate repository ID is refused before any provider command",
+      "the complete case-alias name is refused before any provider command",
+      "the complete traversal after a valid entry is refused before any provider command",
+      "the packaged CLI pins github.com despite an inherited hostile GH_HOST",
+      "independently induces a multi-file proposal into a new sovereign repository",
+      "induces a verified gitlink transition as a commit tree entry",
+      "refuses target-ref drift immediately before publication"
+    ]
+  },
+  "sourceSha256": {
+    "package.json": "f8adad820c2ec91a9f2c3cb803afc2150e4996eef015387551f2b4525e716477",
+    "src/github-api.mjs": "a448e6c3b691a43005b12f7c64ba8bec724cc0322c695c180526d565e936341d",
+    "src/induction-saga.mjs": "4edc4da8e2803428c851495776004e69a881b9c40600fdb5048967482a613199",
+    "src/protected-source-authorization.mjs": "2583d6f15bae43efb70ff2ee827bcb0d3876185869630579d8479744a04242f2",
+    "src/software-induction.mjs": "a082fc087562ae763961259b0164d9b50e10f586a79edf330d76f7b42d03bf04",
+    "scripts/authorize-protected-source.mjs": "e4b4d955a5f2a0fe6b1467631c07a04f6ff3521a99c22f27d449a9631bcabff6",
+    "scripts/reconcile-repository-defaults.mjs": "187f1e1e94792b7b55aa9bb95dfdc8226e90fcbb813c94d32ba26dbfe0e6e590",
+    "test/fixtures/induction-recovery.mjs": "4de376dc1d6d8b415fcdaa9b36a69afe355d75b4fa7467b914ba4f908a3f1000",
+    "test/github-api.test.mjs": "307c6b547e00170ce5d94f3f4e41cddca0634cfc55a7c34c135df7b4f7dc1914",
+    "test/induction-recovery.test.mjs": "6732ec5fd404616c9d6bc92134e194bc993b781df0471711719cd3705898b27a",
+    "test/induction-saga.test.mjs": "7f1c8080010be45cf53937537f458e2a7c070ef50e4ca5146fa28b64c34362c9",
+    "test/post-attempt.test.mjs": "9ccc3805f1691a88e5bc06665e1a3b43834ac8cf4c097612be650fcf3bbab265",
+    "test/protected-source-authorization.test.mjs": "d9927831f0f52b19a601af35a7b64b586a190be3c220479d171e98dbd39c2e5c",
+    "test/repository-defaults-cli.test.mjs": "15527ef0b3e4c5f2911e926b31c7e363f94e3eda18f1bc4b68bb94f6f106efc9",
+    "test/software-induction.test.mjs": "a0dec418122c1dd01521e819d614a7c08eab3503e324e438516aa69906e60e28"
+  },
+  "consumer": {
+    "observedAt": "2026-10-16T16:18:07.189405+00:00",
+    "scope": "consumer syntax checks and the changed sovereign-induction acceptance file; no retained dependency context exists for the full private consumer suite",
+    "commands": [
+      {
+        "command": [
+          "npm",
+          "run",
+          "check"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "/home/emsenn/.local/lib/nodejs/node-v24.19.0-linux-x64/bin/node",
+          "--test",
+          "test/sovereign-induction.test.mjs"
+        ],
+        "exit": 0
+      }
+    ],
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "test": "services/github-software-induction-service/test/sovereign-induction.test.mjs",
+    "testSha256": "1402b1d7e66fd205c02050ea65614911fbd1807ec2acfc57e3cb4bf5fc48df7f",
+    "receivedPackedOwner": true
+  },
+  "package": {
+    "observedAt": "2026-10-16T16:17:34.259303+00:00",
+    "integrity": "sha512-P0wep8Y6uVauJi6L+yPuqquIvBtdjtvI7vCDjdzOMzoF5VD3IJVmGHzDkfN8jnIEemVDRzNwAnVzTAuxCVrxjg==",
+    "shasum": "cefcf00b9dfa752a8ced9bc7c2663092f0b69be5",
+    "files": {
+      "package.json": "f8adad820c2ec91a9f2c3cb803afc2150e4996eef015387551f2b4525e716477",
+      "README.md": "469eba9c52d25209d8966705f8aaabe622047704a7563790022c297c69b8b700",
+      "scripts/authorize-protected-source.mjs": "e4b4d955a5f2a0fe6b1467631c07a04f6ff3521a99c22f27d449a9631bcabff6",
+      "src/github-api.mjs": "a448e6c3b691a43005b12f7c64ba8bec724cc0322c695c180526d565e936341d",
+      "src/induction-saga.mjs": "4edc4da8e2803428c851495776004e69a881b9c40600fdb5048967482a613199",
+      "src/protected-source-authorization.mjs": "2583d6f15bae43efb70ff2ee827bcb0d3876185869630579d8479744a04242f2",
+      "scripts/reconcile-repository-defaults.mjs": "187f1e1e94792b7b55aa9bb95dfdc8226e90fcbb813c94d32ba26dbfe0e6e590",
+      "src/software-induction.mjs": "a082fc087562ae763961259b0164d9b50e10f586a79edf330d76f7b42d03bf04"
+    },
+    "allBytesMatchReviewSource": true
+  },
+  "packagedCli": {
+    "observedAt": "2026-10-16T16:18:12.257449+00:00",
+    "inheritedGhHost": "hostile.example.invalid",
+    "explicitGhHost": "github.com",
+    "commands": [
+      {
+        "mode": "plan",
+        "exit": 0,
+        "observations": [
+          {
+            "repository": "561-group/assay.561.group",
+            "id": 1313100453,
+            "before": true,
+            "disposition": "already-enabled",
+            "changed": false,
+            "observedAt": "2026-10-16T16:18:10.531Z"
+          },
+          {
+            "repository": "red-cup-engineering/computer-web-engineering-services-section",
+            "id": 1322295518,
+            "before": true,
+            "disposition": "already-enabled",
+            "changed": false,
+            "observedAt": "2026-10-16T16:18:11.059Z"
+          }
+        ]
+      },
+      {
+        "mode": "apply",
+        "exit": 0,
+        "observations": [
+          {
+            "repository": "561-group/assay.561.group",
+            "id": 1313100453,
+            "before": true,
+            "disposition": "already-enabled",
+            "changed": false,
+            "observedAt": "2026-10-16T16:18:11.746Z"
+          },
+          {
+            "repository": "red-cup-engineering/computer-web-engineering-services-section",
+            "id": 1322295518,
+            "before": true,
+            "disposition": "already-enabled",
+            "changed": false,
+            "observedAt": "2026-10-16T16:18:12.248Z"
+          }
+        ]
+      }
+    ],
+    "mutations": 0
+  },
+  "prior117ChangeEvidenceUnchanged": true,
+  "limitations": "Recovery acceptance uses real separate Node processes and a persisted operation record with simulated GitHub responses; no live repository was created. The private consumer full suite has no retained installed dependency context; its syntax checks and changed sovereign-induction acceptance file passed against the packed owner. No durable-store implementation, deployment, package publication or access change is included."
+}

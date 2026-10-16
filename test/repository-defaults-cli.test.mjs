@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,3 +33,30 @@ for (const [label, selection] of [
     }
   });
 }
+
+test("the packaged CLI pins github.com despite an inherited hostile GH_HOST", () => {
+  const root = mkdtempSync(join(tmpdir(), "github-defaults-host-"));
+  try {
+    const input = join(root, "selection.json"), trace = join(root, "calls.jsonl");
+    writeFileSync(input, JSON.stringify([valid]));
+    writeFileSync(join(root, "gh"), `#!${process.execPath}
+import fs from "node:fs";
+const args = process.argv.slice(2), at = args.indexOf("--hostname");
+const host = at < 0 ? process.env.GH_HOST : args[at + 1];
+fs.appendFileSync(process.env.GH_TRACE, JSON.stringify({ args, host, inheritedHost: process.env.GH_HOST }) + "\\n");
+if (host !== "github.com") process.exit(87);
+process.stdout.write(JSON.stringify({ id: 123, full_name: "union/project", delete_branch_on_merge: true }));
+`, { mode: 0o755 });
+    for (const mode of ["plan", "apply"]) {
+      const result = spawnSync(process.execPath, [script, input, mode], {
+        encoding: "utf8", env: { PATH: root, HOME: root, TMPDIR: root, GH_HOST: "hostile.example.invalid", GH_TRACE: trace },
+      });
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(JSON.parse(result.stdout).disposition, "already-enabled");
+    }
+    const calls = readFileSync(trace, "utf8").trim().split("\n").map(JSON.parse);
+    assert.equal(calls.length, 2);
+    assert.ok(calls.every(({ host, inheritedHost, args }) => host === "github.com"
+      && inheritedHost === "hostile.example.invalid" && args[args.indexOf("--method") + 1] === "GET"));
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});

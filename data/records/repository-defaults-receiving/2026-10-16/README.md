@@ -21,6 +21,12 @@ of the packaged CLI in plan and apply modes. Shared compute qualification held
 the existing exclusive lease. Creation and mutation behavior was tested at the
 provider boundary; no test repository was created.
 
+`recovery-qualification.json` records the subsequent source-review repair:
+45 owner tests, three acceptance tests in the existing private service consumer,
+the packed owner, and live CLI no-op receiving with a hostile inherited
+`GH_HOST`. It supersedes the initial source qualification for the changed
+implementation while preserving the original 117-setting observations.
+
 GitHub documents `delete_branch_on_merge` as false when omitted during
 [organization repository creation](https://docs.github.com/en/rest/repos/repos#create-an-organization-repository),
 and requires an organization owner to set it true on that request. The creation

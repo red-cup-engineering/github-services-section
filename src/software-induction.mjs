@@ -14,7 +14,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
-import { githubApi } from "./github-api.mjs";
+import { githubApi, reconcileRepositoryDefaults } from "./github-api.mjs";
 import { runTestsCommand } from "@red-cup-engineering/javascript-node-services-section/run-sandboxed-command";
 import { sha256Digest, sha256Hex } from "@red-cup-engineering/cryptographic-computer-data-engineering-services-section/integrity";
 
@@ -128,7 +128,7 @@ export async function induceGithubSoftwareProposalLocally({
   target = { repository: source?.repository, ref: "heads/main", create: false },
   commitMessage = "Induce verified software proposal",
   chain,
-}, { api = githubApi(), induce, operationKey, onState = () => {} } = {}) {
+}, { api = githubApi(), induce, operationKey, repositoryRecovery, onState = () => {} } = {}) {
   assertProposal(proposal);
   if (source?.kind !== "github-repository" || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u.test(source.repository ?? "")
       || !/^[0-9a-f]{40}$/u.test(source.commit ?? "")) {
@@ -183,12 +183,37 @@ export async function induceGithubSoftwareProposalLocally({
     projections.runnableEntrypoints = entrypoints.filter((path) => existsSync(join(territory, path)));
 
     if (creatingRepository) {
-      const [owner, name] = target.repository.split("/");
-      await api.createOrgRepository(owner, {
-        name,
-        description: target.description ?? `Sovereign capability cell fabricated from ${source.repository}@${source.commit}`,
-        visibility: target.visibility ?? "public",
-      });
+      let identity = repositoryRecovery?.createdRepository;
+      if (!identity) {
+        const [owner, name] = target.repository.split("/");
+        await onState("repository-creation-attempted");
+        const created = await api.createOrgRepository(owner, {
+          name,
+          description: target.description ?? `Sovereign capability cell fabricated from ${source.repository}@${source.commit}`,
+          visibility: target.visibility ?? "public",
+        });
+        if (!Number.isSafeInteger(created?.id) || created.id < 1
+            || created.full_name?.toLowerCase() !== target.repository.toLowerCase()) {
+          throw new Error("repository creation response did not establish the target numeric identity");
+        }
+        identity = { repository: created.full_name, id: created.id };
+        await onState("repository-created", { createdRepository: identity });
+      }
+      await onState("repository-receiving");
+      const received = await reconcileRepositoryDefaults({
+        repository: target.repository, expectedId: identity.id,
+        apply: repositoryRecovery?.repositoryDefaultsAttempted !== true,
+        onAttempt: () => onState("repository-defaults-attempted", { repositoryDefaultsAttempted: true }),
+      }, api);
+      if (received.disposition === "skipped-inactive") {
+        throw Object.assign(new Error("created repository is inactive"), { code: "REPOSITORY_DEFAULTS_REFUSED" });
+      }
+      if (received.before !== true && received.after !== true) {
+        throw new Error("repository defaults outcome remains uncertain; refusing to repeat the attempted update");
+      }
+      // This CAS fences a resumed receiver against the old invocation before
+      // either can proceed to Git object/ref publication.
+      await onState("repository-ready");
     }
     const entries = [];
     for (const change of proposal.changes) {

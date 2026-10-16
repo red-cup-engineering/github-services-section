@@ -22,7 +22,7 @@ for (const row of selection) {
   ids.add(row.expectedId); names.add(row.repository.toLowerCase());
 }
 const request = (method, repository, body) => JSON.parse(execFileSync("gh", [
-  "api", "--method", method, `repos/${repository}`, ...(body ? ["--input", "-"] : []),
+  "api", "--hostname", "github.com", "--method", method, `repos/${repository}`, ...(body ? ["--input", "-"] : []),
 ], { encoding: "utf8", input: body ? JSON.stringify(body) : undefined, timeout: 30_000, maxBuffer: 2 * 1024 * 1024 }));
 const api = {
   getRepo: (repository) => request("GET", repository),

@@ -3,12 +3,24 @@
 This package owns bounded GitHub API contracts shared by automation.
 
 `githubApi().createOrgRepository` explicitly enables `delete_branch_on_merge`
-and reads the created repository back before returning. This default reaches
-the existing sovereign software-induction creation path; GitHub's omitted-field
-default is false.
+and returns the POST receipt without a fallible follow-up call. The existing
+sovereign software-induction owner persists the returned numeric repository
+identity before receiving the default through a separate read. GitHub's
+omitted-field default is false.
+
+The durable induction saga records a creation attempt before POST. Receiving
+failure after a successful creation retains that ID and permits the exact same
+request to re-verify its proposal and resume receiving after restart. Settings
+updates are also recorded before PATCH: an uncertain update is observed on
+replay and is never blindly repeated. Compare-and-set transitions fence the
+old receiver before publication. A lost creation response without a durable
+numeric ID remains creation-uncertain; it cannot authorize another POST or
+adoption of a same-name repository. Provider permission/validation denials,
+identity changes and proposal verification failures remain terminal refusals.
 
 `reconcile-github-repository-defaults SELECTION.json [plan|apply]` repairs drift
-using the existing authenticated GitHub CLI. The JSON selection is an array of
+using the existing authenticated GitHub CLI, explicitly pinned to `github.com`
+regardless of inherited `GH_HOST`. The JSON selection is an array of
 `{ "repository": "owner/name", "expectedId": 123 }` records whose ownership and
 authority the caller has already verified. The default mode is read-only. Apply
 mode checks the current identity and administrator capability, skips archived
