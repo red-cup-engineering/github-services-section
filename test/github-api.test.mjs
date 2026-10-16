@@ -117,6 +117,21 @@ test("the provider admits the existing GitHub runtime credential when its servic
   }
 });
 
+test("transient GitHub tarball failures retain provider status for ID-backed resumption", async () => {
+  for (const [status, expectedRetryable] of [[503, true], [429, true], [404, true], [403, false]]) {
+    const api = githubApi({ fetchImpl: async () => new Response("temporarily unavailable", { status }) });
+    await assert.rejects(api.getRepositoryTarball("union/seed", "a".repeat(40)),
+      (error) => error.status === status && error.retryable === expectedRetryable);
+  }
+  let calls = 0;
+  const codeload = githubApi({ fetchImpl: async () => ++calls === 1
+    ? new Response(null, { status: 302, headers: { location: "https://codeload.github.com/union/seed/legacy.tar.gz" } })
+    : new Response("overloaded", { status: 503 }) });
+  await assert.rejects(codeload.getRepositoryTarball("union/seed"),
+    (error) => error.status === 503 && error.retryable === true && /codeload GET/.test(error.message));
+  assert.equal(calls, 2);
+});
+
 test("tarball transport refuses foreign redirects and over-limit bodies", async () => {
   const foreign = githubApi({ fetchImpl: async () => new Response(null, { status: 302, headers: { location: "https://example.invalid/archive.tgz" } }) });
   await assert.rejects(foreign.getRepositoryTarball("acme/widgets"), /left the admitted codeload origin/);
