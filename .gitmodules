@@ -1,0 +1,8 @@
+[submodule "github-software-induction-service"]
+	path = services/github-software-induction-service
+	url = https://github.com/red-cup-engineering/github-software-induction-service.git
+	branch = main
+[submodule "github-actions-public-compute-provider"]
+	path = services/github-actions-public-compute-provider
+	url = https://github.com/red-cup-engineering/github-actions-public-compute-provider.git
+	branch = main
