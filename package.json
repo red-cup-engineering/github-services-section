@@ -1,6 +1,11 @@
 {
   "name": "@red-cup-engineering/github-services-section",
   "version": "0.1.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/red-cup-engineering/computer-web-engineering-services-section.git",
+    "directory": "services/web-platform-services-section/services/web2-platform-services-section/services/web2-software-platform-services-section/services/github-services-section"
+  },
   "type": "module",
   "dependencies": {
     "@red-cup-engineering/computer-content-address-engineering-services-section": "0.2.0",
