@@ -3,8 +3,7 @@
   "version": "0.1.1",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/red-cup-engineering/computer-web-engineering-services-section.git",
-    "directory": "services/web-platform-services-section/services/web2-platform-services-section/services/web2-software-platform-services-section/services/github-services-section"
+    "url": "git+https://github.com/red-cup-engineering/github-services-section.git"
   },
   "type": "module",
   "dependencies": {
