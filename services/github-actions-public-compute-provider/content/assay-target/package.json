@@ -1,6 +1,11 @@
 {
   "name": "@red-cup-engineering/union-public-compute-assay",
   "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/red-cup-engineering/computer-web-engineering-services-section.git",
+    "directory": "services/web-platform-services-section/services/web2-platform-services-section/services/web2-software-platform-services-section/services/github-services-section/services/github-actions-public-compute-provider/content/assay-target"
+  },
   "type": "module",
   "scripts": {
     "test": "node --test test/*.test.mjs"
