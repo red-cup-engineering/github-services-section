@@ -33,5 +33,10 @@
     "check": "node --check src/*.mjs && node --check scripts/authorize-protected-source.mjs && node --check scripts/reconcile-repository-defaults.mjs",
     "test": "node --test test/*.test.mjs"
   },
-  "private": false
+  "private": false,
+  "license": "MIT",
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/561-group/.github/blob/main/TIPS.md"
+  }
 }
